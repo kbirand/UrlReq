@@ -24,9 +24,19 @@ class ViewController: NSViewController {
         super.viewDidLoad()
         startConnection(ps: "submit=1", file: "fillImages.php") { (json) in
             self.koko = json
-            print(self.koko)
+            let mainURL = "http://scouthy-test.com:8888/" + "admin/"
+            let url = URL(fileURLWithPath: mainURL).appendingPathComponent("test.php")
+            var request : URLRequest = URLRequest(url: url)
+            request.httpMethod = "POST"
+            let jsonDATA = try! JSONSerialization.data(withJSONObject: json, options: JSONSerialization.WritingOptions.prettyPrinted)
+        
+            request.httpBody = jsonDATA
+        
+            let dataTask = URLSession.shared.dataTask(with: request)
+            dataTask.resume()
+            
         }
-        print(koko)
+       
         // Do any additional setup after loading the view.
     }
     
