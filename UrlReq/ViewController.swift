@@ -7,12 +7,14 @@
 //
 
 import Cocoa
+import CryptoSwift
 
 class ViewController: NSViewController {
     
     
     let mainURL = "http://scouthy-test.com:8888/" + "admin/"
-    
+    let iv = "gqLOHUioQ0QjhuvI"
+    let key = "koraybirand12711"
     
     var koko = [[String:String]]() {
         didSet {
@@ -20,22 +22,34 @@ class ViewController: NSViewController {
         }
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    
+    @IBAction func button(_ sender: NSButton) {
         startConnection(ps: "submit=1", file: "fillImages.php") { (json) in
             self.koko = json
+
+            
+            
             let mainURL = "http://scouthy-test.com:8888/" + "admin/"
             let url = URL(fileURLWithPath: mainURL).appendingPathComponent("test.php")
+            let passData = try! "HADIBAKALIMKOCUM".aesEncrypt(key: self.key, iv: self.iv)
             var request : URLRequest = URLRequest(url: url)
             request.httpMethod = "POST"
-            let jsonDATA = try! JSONSerialization.data(withJSONObject: json, options: JSONSerialization.WritingOptions.prettyPrinted)
-        
-            request.httpBody = jsonDATA
-        
+            print(passData)
+            
+            request.httpBody = passData.data(using: String.Encoding.utf8)
+
             let dataTask = URLSession.shared.dataTask(with: request)
             dataTask.resume()
             
         }
+        
+       
+        
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
+        
        
         // Do any additional setup after loading the view.
     }
@@ -46,9 +60,10 @@ class ViewController: NSViewController {
         }
     }
     
-    func foo()
-{
-    
+    func encryptionBase64(toEncode: String) -> String {
+        let encodedData = (toEncode as NSString).data(using: String.Encoding.utf8.rawValue)
+        let encodedString = encodedData?.base64EncodedString(options: Data.Base64EncodingOptions(rawValue: Data.Base64EncodingOptions.RawValue(0)))
+        return encodedString!
     }
     
     func startConnection(ps: String, file: String, completion: @escaping ([[String:String]]) -> Void) {
@@ -80,4 +95,23 @@ class ViewController: NSViewController {
     
     
 }
+
+extension String{
+    func aesEncrypt(key: String, iv: String) throws -> String {
+        let data = self.data(using: .utf8)!
+        let encrypted = try! AES(key: key, iv: iv, padding: .pkcs7).encrypt([UInt8](data))
+        let encryptedData = Data(encrypted)
+        return encryptedData.base64EncodedString()
+    }
+    
+    func aesDecrypt(key: String, iv: String) throws -> String {
+        let data = Data(base64Encoded: self)!
+        let decrypted = try! AES(key: key, iv: iv, padding: .pkcs7).decrypt([UInt8](data))
+        
+        let decryptedData = Data(decrypted)
+        return String(bytes: decryptedData.bytes, encoding: .utf8) ?? "Could not decrypt"
+        
+    }
+}
+
 
